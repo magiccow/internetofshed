@@ -4,6 +4,7 @@ Python code for Raspberry Pi Zero (under Raspian) to read several sensors:
 - DHT11 for temperature / humidity
 - 2 x switches (door & window position)
 - LDR for light sensing (via PCF 8591 4-channel I2C A2D converter)
+- Rain sensor (Funduino) - using on/off ouput from comparator
 
 Data is stored in a sqlite database (for 7 days) and also uploaded to ThingSpeak
 
