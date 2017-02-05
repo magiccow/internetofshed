@@ -9,6 +9,7 @@ import time
 from smbus import SMBus
 import logging
 import sqlite3
+import readPressure
 
 sqlname = "/home/pi/sensors/internetofshed.db"
 	
@@ -24,12 +25,12 @@ def readAuth():
 	return thingspeak[2] 
 
 
-#  CREATE TABLE sensordata (id integer primary key autoincrement, timet datetime default current_timestamp, door int, rooflight int, temperature float, outdoor float, humidity int, lightlevel int);
-def writeDB(door,rooflight,temperature,outdoor,humidity,lightlevel):
+#  CREATE TABLE sensordata (id integer primary key autoincrement, timet datetime default current_timestamp, door int, rooflight int, temperature float, outdoor float, humidity int, lightlevel int, raining int, pressure float);
+def writeDB(door,rooflight,temperature,outdoor,humidity,pressure,lightlevel,raining):
 	conn = sqlite3.connect(sqlname)
 	cur = conn.cursor()
-	cur.execute("INSERT INTO sensordata (door,rooflight,temperature,outdoor,humidity,lightlevel) VALUES (?,?,?,?,?,?)", 
-		(door,rooflight,temperature,outdoor,humidity,lightLevel))
+	cur.execute("INSERT INTO sensordata (door,rooflight,temperature,outdoor,humidity,pressure,lightlevel,raining) VALUES (?,?,?,?,?,?,?,?)", 
+		(door,rooflight,temperature,outdoor,humidity,pressure,lightLevel,raining))
 	conn.commit()
 	cur.close() 
 	conn.close()
@@ -48,11 +49,11 @@ def sensorNameDs1820():
 
 
 # Send data packet to thingspeak site
-def sendValues(api_key,door,window,temp,humid,light,outdoor):
+def sendValues(api_key,door,window,temp,humid,pressure,light,outdoor,raining):
 	timeString = time.strftime("%Y-%m-%d %H:%M:%S") 
 	url = 'https://api.thingspeak.com/update.json'
 	status = 'Generated at: '+timeString
-	data = {'field1':temp, 'field2':outdoor, 'field3':humid, 'field4':light, 'field5':door,  'field6':window, 'api_key':api_key, 'status':status } 
+	data = {'field1':temp, 'field2':outdoor, 'field3':humid, 'field4':light, 'field5':door,  'field6':window, 'field7':raining, 'field8':pressure, 'api_key':api_key, 'status':status } 
 	upload = json.dumps( data )
 	data['api_key'] = 'XXXX'
 	dump = json.dumps( data ) 
@@ -117,6 +118,8 @@ logger.addHandler(fh)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(20,GPIO.IN)
 GPIO.setup(21,GPIO.IN)
+# Rain sensor (TTL)
+GPIO.setup(27,GPIO.IN)
 
 # Settings for DHT11 temp/humidty sensor
 sensor = Adafruit_DHT.DHT11
@@ -149,13 +152,20 @@ lightLevel = read_light()
 door =  GPIO.input(20)
 rooflight = 1 - GPIO.input(21)
 
+# Read rain sensor
+rain =  GPIO.input(27)
+
+# Read BMP 280 for atmospheric pressure
+pressure = readPressure.readPressure()
+
 #print('Outdoor={0:0.1f} C'.format(outdoor))
 #print('Temp={0:0.1f} C  Humidity={1:0.1f}%'.format(temperature, humidity))
 #print('Light  = '+str(lightLevel))
 #print("Door = "+str(door))
 #print("Rooflight = "+str(rooflight))
+#print("Rain = "+str(rain))
 
-sendValues(thingspeakKey,door,rooflight,temperature,humidity,lightLevel,outdoor)
+sendValues(thingspeakKey,door,rooflight,temperature,humidity,pressure,lightLevel,outdoor,rain)
 
-writeDB(door,rooflight,temperature,outdoor,humidity,lightLevel)
+writeDB(door,rooflight,temperature,outdoor,humidity,pressure,lightLevel,rain)
 
