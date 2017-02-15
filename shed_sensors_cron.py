@@ -156,7 +156,7 @@ rooflight = 1 - GPIO.input(21)
 rain =  GPIO.input(27)
 
 # Read BMP 280 for atmospheric pressure
-pressure = readPressure.readPressure()
+pressure = round( readPressure.readPressure(), 2 )
 
 #print('Outdoor={0:0.1f} C'.format(outdoor))
 #print('Temp={0:0.1f} C  Humidity={1:0.1f}%'.format(temperature, humidity))
