@@ -94,7 +94,7 @@ def read_temp(sensorName):
 	f.close()
 
 	if 'YES' in header: 
-		m = re.search( '(\d+)$', body )
+		m = re.search( '(-?\d+)$', body )
 		if m:
 			temp = float(m.group(1))/1000.0
 
